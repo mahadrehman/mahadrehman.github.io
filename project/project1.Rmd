@@ -1,0 +1,284 @@
+---
+title: "Project 1"
+author: "Mahad Rehman"
+date: "2020-10-18"
+output: html_document
+   
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+---
+
+#### Dataset 1: State GDP per Capita 
+
+```{R}
+library(tidyverse)
+library("httr")
+library("readxl")
+GET("https://query.data.world/s/ub5ocerx4dj5u2igmavzz3r6tn3wxh", write_disk(tf <- tempfile(fileext = ".xls")))
+State_GDP_per_capita <- read_excel(tf)
+glimpse(State_GDP_per_capita)
+```
+
+#### Dataset 2: State Populations
+
+```{R}
+urlfile="https://raw.githubusercontent.com/jakevdp/data-USstates/master/state-population.csv"
+State_population <- read_csv(url(urlfile))
+glimpse(State_population)
+```
+
+
+#### Dataset 3: State Regions
+
+```{R}
+region<-read.csv("states.csv")
+glimpse(region)
+```
+
+While searching for datasets of interest to me, I came upon a dataset that listed the per capita GDP for each state from 1997 to 2015 on data.world. In particular, this dataset had one column that listed the name of the states, followed by 19 columns with years as titles that had the GDP per capita listed for the corresponding state for that year. In total, this dataset had 3 variables: state, year, and GDP per capita. Since GDP per capita is the economic output per person, I thought it would be interesting to see if there was any correlation between a state’s GDP per capita and the population of that state. To follow up on this interest, I found a second dataset that had the population of each state listed from 1990 to 2013. In particular, it had one column with state abbreviations, one titled "ages" which indicated whether the population listed was the total population for that state or the population under 18, one with the year, and one with the population value. In total there were four variables: state, year, age, and population. I also thought it would be cool to see if different regions of the US had differences in GDP per capita. To follow up on this, I found a dataset on Kaggle that listed each state with its corresponding region. This dataset had four variables: state, state code (state abbreviation), region of the country that state is in, and the division within that region.
+
+Based on these different variables, I was unsure about the exact correlations or associations I would find. Part of me thought that there may be a relationship between total population in a state and the GDP per capita based on the fact that states such as California, Texas, and New York have large populations and strong economies. However, I realize that GDP per Capita is the economic output per person, so there is a high likelihood that there may not be a correlation with population. I also thought it would be cool to make a new variable of total GDP by multiplying the total population in a state with the GDP per capita and then determining if it was correlated with Total Population. It seems likely that Total GDP will be more closely related to the population of a state than GDP per capita. In terms of regions, I thought that maybe the states in the Northeast would have a higher GDP per Capita than states in the South given that they are generally viewed as "wealthier." However, I wanted to see if this assumption was actually valid or if it was based on false generalizations.
+
+
+#### Tidying Dataset 1
+
+```{R}
+State_GDP_per_capita <- State_GDP_per_capita %>% rename_at(1,~"State")
+State_GDP_per_capita_tidy <- State_GDP_per_capita %>% pivot_longer(!State, names_to = "Year", values_to = "GDP per capita")
+glimpse(State_GDP_per_capita_tidy)
+```
+
+The first column in Dataset 1 was named "1." In order to make the joining process easier, I renamed the column to "State." I then began the process of tidying the dataset. This dataset was untidy because it did not have the year or GDP per Capita variables listed in their own columns. Instead, it had the different years as column titles and listed the GDP per Capita for each state for that year. Therefore, I used pivot_longer to tidy the dataset, creating one column that has the year listed in it and one column with GDP per Capita for that state in that year. This decreased the amount of columns in the data and increased the amount of rows because each state now had multiple years listed next to it. However, this made the data much more tidy because each variable now has its own column and each observation has its own row.
+
+
+#### Tidying Dataset 2
+
+```{R}
+names(State_population) <- c("State", "Ages", "Year", "Population")
+State_population_tidy<- State_population %>% pivot_wider(names_from="Ages",values_from="Population")
+State_population_tidy$State <- state.name[match(State_population_tidy$State, state.abb)]
+names(State_population_tidy) <- c("State", "Year", "Population Under 18", "Total Population")
+glimpse(State_population_tidy)
+```
+
+The first column in the second dataset was titled "state/region.” To make it easier to join with the first dataset, I changed the name of the variable to "State" and also capitalized the other variables for neatness.  This dataset was different from the first dataset in that “Year” had its own column, but the column titled "Ages" had two separate variables within it: "total" population and "under18" population. Therefore, I used pivot_wider to tidy this data by taking the data in the "Ages'' column and creating two new columns, one for the total population of the state and one for the population under 18. The values for these columns were the corresponding values from the "population" column that existed before the data was made tidy. By doing this, I was able to give each variable a separate column and each observation a separate row. I then renamed the abbreviations in the "State" column by matching them with their corresponding full state names to make it easier to join the datasets. Lastly, I renamed the columns "State", "Year", "Population Under 18", and "Total Population," for neatness.
+
+#### Tidying Dataset 3 
+```{R}
+region <- region %>% select(State, Region)
+glimpse(region)
+```
+
+The third dataset did not need tidying as all variables had their own columns and all observations their own rows. However, I was only concerned with the "State" and "Region" variables, so I selected only those two columns from the dataset to use for the rest of my project. 
+
+#### Joining Datasets
+
+```{R}
+## Joining Dataset 1 and 2
+State_population_tidy$Year <- as.character(as.numeric(State_population_tidy$Year))
+GDP_Pop <- inner_join(State_GDP_per_capita_tidy, State_population_tidy, by=c("State","Year"))
+
+## Joining Dataset 2 and 3 
+GDP_Pop_reg <- left_join(GDP_Pop,region, by=c("State"))
+
+```
+
+Because my data has multiple states and multiple years that needed to be matched between the first and second dataset, I needed to first make the "Year" variable in the second dataset a character to match the "Year" variable in the first dataset. I then conducted an inner join to merge the first and second dataset by the "State" and "Year" variables because it would not make sense to join based on only state if the years between the two were different. I decided to do an inner join because it allowed me to keep the "GDP per Capita," "Total Population," and "Population Under 18" observations for those cases where there was a match in the "State" and "Year" variables between both datasets. I could have used a left or full join to accomplish this, but it would have left me with various NAs because, depending on the exact function, the result would have included observations in the datasets that did not have a match in the other dataset, which I could not use for my project. Originally, dataset 1 had 1,140 observations for each variable while dataset 2 had 1,272 observations for each variable. From dataset 1, the observations that were dropped included those that had either the United States or regions such as “New England” or “Great Lakes” as the “State” variable. The reason I chose to drop these rows is because they would have resulted in skewed summary statistics for my project since my focus was the difference between the states. Also, rows that had 2014 or 2015 as the “Year” value were also dropped as they did not have a matching observation in the second dataset and therefore could not be effectively used in my analysis. The rows dropped from dataset 2 included those that had a “Year” observation between 1990 and 1996 because these did not have matching data in dataset 1. Also, any rows that had either Puerto Rico or the US as the “State” value were also removed because there was no data for Puerto Rico in dataset 1 and using data from the entire US would have skewed my analysis if I wanted to compare between the different states. At the end, I was left with a dataset that had 5 variables with 850 observations each. I do not believe there were problems caused by dropping these NA values because they did not have any corresponding data between the datasets and would not have contributed to my analysis. Even without them I have a significant amount of data for each state. Lastly, I used left join to merge this dataset with the third dataset by the "State" variable. I decided to use a left join in this case because it would allow me to keep all my variables and observations from the combined dataset that was formed when I joined datasets 1 and 2 while matching each state with its corresponding region in the US from the third dataset. This time I knew that each state had a region associated with it, meaning there would not be any NAs. After completing my join, I was left with a dataset with 6 columns (State, Year, GDP per Capita, Population Under 18, Total Population, and Region) and 850 rows. 
+
+#### Statistical Summary
+
+```{R}
+install.packages("kableExtra", repos = "http://cran.us.r-project.org")
+library(kableExtra)
+## General summary of all variables 
+summary <- GDP_Pop_reg %>% summarize(av_GDP_per_capita=mean(`GDP per capita`), sd_GDP_per_capita = sd(`GDP per capita`), md_GDP_per_capita= median(`GDP per capita`), vr_GDP_per_capita = var(`GDP per capita`), ct_GDP_per_capita=n(), mn_GDP_per_capita = min(`GDP per capita`), mx_GDP_per_capita = max(`GDP per capita`), dn_GDP_per_capita=n_distinct(`GDP per capita`), q1_GDP_per_capita = quantile(`GDP per capita`, c(0.25)), q3_GDP_per_capita = quantile(`GDP per capita`, c(0.75)), iq_GDP_per_capita = IQR(`GDP per capita`), av_Total_pop=mean(`Total Population`), sd_Total_pop = sd(`Total Population`), md_Total_pop = median(`Total Population`), vr_Total_pop = var(`Total Population`), ct_Total_pop=n(), mn_Total_pop = min(`Total Population`), mx_Total_pop = max(`Total Population`), dn_Total_pop=n_distinct(`Total Population`), q1_Total_pop = quantile(`Total Population`, c(0.25)), q3_Total_pop = quantile(`Total Population`, c(0.75)), iq_Total_pop=IQR(`Total Population`), av_pop_under_18=mean(`Population Under 18`), sd_pop_under_18 = sd(`Population Under 18`), md_pop_under_18 = median(`Population Under 18`), vr_pop_under_18 = var(`Population Under 18`), ct_pop_under_18=n(), mn_pop_under_18 = min(`Population Under 18`), mx_pop_under_18 = max(`Population Under 18`), dn_pop_under_18 = n_distinct(`Population Under 18`), q1_pop_under_18 = quantile(`Population Under 18`, c(0.25)), q3_pop_under_18 = quantile(`Population Under 18`, c(0.75)), iq_pop_under_18=IQR(`Population Under 18`)) %>% pivot_longer(cols=c(1:33), names_to = "Type", values_to = "Value") %>% separate(Type, into=c("Statistic","Variable"), sep=3) %>% pivot_wider(names_from=Statistic,values_from=Value)
+names(summary) <- c("Variable", "Mean", "Standard Deviation", "Median", "Variance", "Count", "Minimum", "Maximum", "Distinct Count", "Quartile 1", "Quartile 3", "IQR")
+summary %>% kbl(caption = "Summary Statistics Numeric Variables") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of GDP per Capita grouped by Region
+GDP_Pop_reg %>% group_by(Region) %>% summarize(mean_GDP_per_capita=mean(`GDP per capita`), sd_GDP_per_capita = sd(`GDP per capita`), med_GDP_per_capita= median(`GDP per capita`), var_GDP_per_capita = var(`GDP per capita`), count_GDP_per_capita=n(), min_GDP_per_capita = min(`GDP per capita`), max_GDP_per_capita = max(`GDP per capita`), distinct_GDP_per_capita=n_distinct(`GDP per capita`), quantile1_GDP_per_capita = quantile(`GDP per capita`, c(0.25)), quantile3_GDP_per_capita = quantile(`GDP per capita`, c(0.75)), IQR_GDP_per_capita = IQR(`GDP per capita`)) %>% kbl(caption = "Summary Statistics for GDP per Capita Grouped by Region") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of GDP per Capita grouped by State 
+GDP_Pop_reg %>% group_by(State) %>% summarize(mean_GDP_per_capita=mean(`GDP per capita`), sd_GDP_per_capita = sd(`GDP per capita`), med_GDP_per_capita= median(`GDP per capita`), var_GDP_per_capita = var(`GDP per capita`), count_GDP_per_capita=n(), min_GDP_per_capita = min(`GDP per capita`), max_GDP_per_capita = max(`GDP per capita`), distinct_GDP_per_capita=n_distinct(`GDP per capita`), quantile1_GDP_per_capita = quantile(`GDP per capita`, c(0.25)), quantile3_GDP_per_capita = quantile(`GDP per capita`, c(0.75)), IQR_GDP_per_capita = IQR(`GDP per capita`)) %>% slice(1:15) %>% kbl(caption = "Summary Statistics for GDP per Capita Grouped by State (First 15)") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of GDP per Capita grouped by Year
+GDP_Pop_reg %>% group_by(Year) %>% summarize(mean_GDP_per_capita=mean(`GDP per capita`), sd_GDP_per_capita = sd(`GDP per capita`), med_GDP_per_capita= median(`GDP per capita`), var_GDP_per_capita = var(`GDP per capita`), count_GDP_per_capita=n(), min_GDP_per_capita = min(`GDP per capita`), max_GDP_per_capita = max(`GDP per capita`), distinct_GDP_per_capita=n_distinct(`GDP per capita`), quantile1_GDP_per_capita = quantile(`GDP per capita`, c(0.25)), quantile3_GDP_per_capita = quantile(`GDP per capita`, c(0.75)), IQR_GDP_per_capita = IQR(`GDP per capita`)) %>% kbl(caption = "Summary Statistics for GDP per Capita Grouped by Year") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of GDP per Capita grouped by Region and Year
+GDP_Pop_reg %>% group_by(Region, Year) %>% summarize(mean_GDP_per_capita=mean(`GDP per capita`), sd_GDP_per_capita = sd(`GDP per capita`), med_GDP_per_capita= median(`GDP per capita`), var_GDP_per_capita = var(`GDP per capita`), count_GDP_per_capita=n(), min_GDP_per_capita = min(`GDP per capita`), max_GDP_per_capita = max(`GDP per capita`), distinct_GDP_per_capita=n_distinct(`GDP per capita`), quantile1_GDP_per_capita = quantile(`GDP per capita`, c(0.25)), quantile3_GDP_per_capita = quantile(`GDP per capita`, c(0.75)), IQR_GDP_per_capita = IQR(`GDP per capita`)) %>% slice(1:5) %>% kbl(caption = "Summary Statistics for GDP per Capita Grouped by Region and Year (First 5 Years)") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of Total Population grouped by Region
+GDP_Pop_reg %>% group_by(Region) %>% summarize(mean_pop=mean(`Total Population`), sd_pop = sd(`Total Population`), med_pop= median(`Total Population`), var_pop = var(`Total Population`), count_pop=n(), min_pop = min(`Total Population`), max_pop = max(`Total Population`), distinct_pop=n_distinct(`Total Population`), quantile1_pop = quantile(`Total Population`, c(0.25)), quantile3_pop = quantile(`Total Population`, c(0.75)), IQR_pop = IQR(`Total Population`)) %>% kbl(caption = "Summary Statistics for Total Population Grouped by Region") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of Total Population grouped by State
+GDP_Pop_reg %>% group_by(State) %>% summarize(mean_pop=mean(`Total Population`), sd_pop = sd(`Total Population`), med_pop= median(`Total Population`), var_pop = var(`Total Population`), count_pop=n(), min_pop = min(`Total Population`), max_pop = max(`Total Population`), distinct_pop=n_distinct(`Total Population`), quantile1_pop = quantile(`Total Population`, c(0.25)), quantile3_pop = quantile(`Total Population`, c(0.75)), IQR_pop = IQR(`Total Population`)) %>% slice(1:15) %>%  kbl(caption = "Summary Statistics for Total Population Grouped by State (First 15)") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of Total Population grouped by Year
+GDP_Pop_reg %>% group_by(Year) %>% summarize(mean_pop=mean(`Total Population`), sd_pop = sd(`Total Population`), med_pop= median(`Total Population`), var_pop = var(`Total Population`), count_pop=n(), min_pop = min(`Total Population`), max_pop = max(`Total Population`), distinct_pop=n_distinct(`Total Population`), quantile1_pop = quantile(`Total Population`, c(0.25)), quantile3_pop = quantile(`Total Population`, c(0.75)), IQR_pop = IQR(`Total Population`)) %>% kbl(caption = "Summary Statistics for Total Population Grouped by Year") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of Total Population grouped by Region and Year
+GDP_Pop_reg %>% group_by(Region, Year) %>% summarize(mean_pop=mean(`Total Population`), sd_pop = sd(`Total Population`), med_pop= median(`Total Population`), var_pop = var(`Total Population`), count_pop=n(), min_pop = min(`Total Population`), max_pop = max(`Total Population`), distinct_pop=n_distinct(`Total Population`), quantile1_pop = quantile(`Total Population`, c(0.25)), quantile3_pop = quantile(`Total Population`, c(0.75)), IQR_pop = IQR(`Total Population`)) %>% slice(1:5) %>% kbl(caption = "Summary Statistics for Total Population Grouped by Region and Year (First 5 Years)") %>% kable_styling
+
+## Summary of Population Under 18 by Region
+GDP_Pop_reg %>% group_by(Region) %>% summarize(mean_pop_under_18=mean(`Population Under 18`), sd_pop_under_18 = sd(`Population Under 18`), med_pop_under_18 = median(`Population Under 18`), var_pop_under_18 = var(`Population Under 18`), count_pop_under_18=n(), min_pop_under_18 = min(`Population Under 18`), max_pop_under_18 = max(`Population Under 18`), distinct_pop_under_18 = n_distinct(`Population Under 18`), quantile1_pop_under_18 = quantile(`Population Under 18`, c(0.25)), quantile3_pop_under_18 = quantile(`Population Under 18`, c(0.75)), IQR_pop_under_18 = IQR(`Population Under 18`)) %>% kbl(caption = "Summary Statistics for Population Under 18 Grouped by Region") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of Population Under 18 by State
+GDP_Pop_reg %>% group_by(State) %>% summarize(mean_pop_under_18=mean(`Population Under 18`), sd_pop_under_18 = sd(`Population Under 18`), med_pop_under_18 = median(`Population Under 18`), var_pop_under_18 = var(`Population Under 18`), count_pop_under_18=n(), min_pop_under_18 = min(`Population Under 18`), max_pop_under_18 = max(`Population Under 18`), distinct_pop_under_18 = n_distinct(`Population Under 18`), quantile1_pop_under_18 = quantile(`Population Under 18`, c(0.25)), quantile3_pop_under_18 = quantile(`Population Under 18`, c(0.75)), IQR_pop_under_18 = IQR(`Population Under 18`)) %>% slice(1:15) %>% kbl(caption = "Summary Statistics for Population Under 18 Grouped by State (First 15)") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of Population Under 18 by Year
+GDP_Pop_reg %>% group_by(Year) %>% summarize(mean_pop_under_18=mean(`Population Under 18`), sd_pop_under_18 = sd(`Population Under 18`), med_pop_under_18 = median(`Population Under 18`), var_pop_under_18 = var(`Population Under 18`), count_pop_under_18=n(), min_pop_under_18 = min(`Population Under 18`), max_pop_under_18 = max(`Population Under 18`), distinct_pop_under_18 = n_distinct(`Population Under 18`), quantile1_pop_under_18 = quantile(`Population Under 18`, c(0.25)), quantile3_pop_under_18 = quantile(`Population Under 18`, c(0.75)), IQR_pop_under_18 = IQR(`Population Under 18`)) %>% kbl(caption = "Summary Statistics for Population Under 18 Grouped by Year") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Summary of Population Under 18 by Region and Year
+GDP_Pop_reg %>% group_by(Region, Year) %>%summarize(mean_pop_under_18=mean(`Population Under 18`), sd_pop_under_18 = sd(`Population Under 18`), med_pop_under_18 = median(`Population Under 18`), var_pop_under_18 = var(`Population Under 18`), count_pop_under_18=n(), min_pop_under_18 = min(`Population Under 18`), max_pop_under_18 = max(`Population Under 18`), distinct_pop_under_18 = n_distinct(`Population Under 18`), quantile1_pop_under_18 = quantile(`Population Under 18`, c(0.25)), quantile3_pop_under_18 = quantile(`Population Under 18`, c(0.75)), IQR_pop_under_18 = IQR(`Population Under 18`)) %>% slice(1:5) %>% kbl(caption = "Summary Statistics for Population Under 18 Grouped by Region and Year (First 5 Years") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## State, Region, and Year Associated with Minimum GDP per Capita
+GDP_Pop_reg %>% filter(`GDP per capita` == min(`GDP per capita`)) %>% select(State, Region, Year, `GDP per capita`) %>% kbl(caption = "State, Region, and Year Associated with Minimum GDP per Capita") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## State, Region, and Year  Associated with Maximum GDP per Capita
+GDP_Pop_reg %>% filter(`GDP per capita` == max(`GDP per capita`)) %>% select(State, Region, Year, `GDP per capita`) %>% kbl(caption = "State, Region, and Year  Associated with Maximum GDP per Capita") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## State, Region, and Year  Associated with Minimum Total Population
+GDP_Pop_reg %>% filter(`Total Population` == min(`Total Population`)) %>% select(State, Region, Year,`Total Population`) %>% kbl(caption = "State, Region, and Year  Associated with Minimum Total Population") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## State, Region, and Year  Associated with Maximum Total Population
+GDP_Pop_reg %>% filter(`Total Population` == max(`Total Population`)) %>% select(State, Region, Year, `Total Population`) %>% kbl(caption = "State, Region, and Year  Associated with Maximum Total Population") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## State, Region, and Year Associated with Minimum Population Under 18
+GDP_Pop_reg %>% filter(`Population Under 18` == min(`Population Under 18`)) %>% select(State, Region, Year,`Population Under 18`) %>% kbl(caption = "State, Region, and Year Associated with Minimum Population Under 18") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## State, Region, and Year Associated with Maximum Population Under 18
+GDP_Pop_reg %>% filter(`Population Under 18` == max(`Population Under 18`)) %>% select(State, Region, Year,`Population Under 18`) %>% kbl(caption = "State, Region, and Year Associated with Maximum Population Under 18") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Correlation Matrix for Numeric Variables 
+cormat <- GDP_Pop_reg %>% select_if(is.numeric) %>% cor(use="pair")
+GDP_Pop_reg %>% select_if(is.numeric) %>% cor(use="pair") %>% kbl(caption = "Correlation Matrix for Numeric Variables") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Mean GDP per Capita grouped by Region (Descending in value)
+GDP_Pop_reg %>% group_by(Region) %>% summarize(mean_gdp_per_capita=mean(`GDP per capita`)) %>% arrange(desc(mean_gdp_per_capita)) %>% kbl(caption = "Mean GDP Per Capita by Region") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Mean Total Population grouped by Region (Descending in value)
+GDP_Pop_reg %>% group_by(Region) %>% summarize(mean_population=mean(`Total Population`)) %>% arrange(desc(mean_population)) %>% kbl(caption = "Mean Total Population by Region") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Mean Population Under 18 grouped by Region (Descending in value)
+GDP_Pop_reg %>% group_by(Region) %>% summarize(mean_population_under_18=mean(`Population Under 18`)) %>% arrange(desc(mean_population_under_18)) %>% kbl(caption = "Mean Population Under 18 by Region") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Creating Total GDP variable
+GDP_Pop_reg_Mut <- GDP_Pop_reg %>% mutate(Total_GDP = `GDP per capita` * `Total Population`)
+glimpse(GDP_Pop_reg_Mut)
+
+## Mean Total GDP grouped by Region (Descending in value)
+GDP_Pop_reg %>% mutate(Total_GDP = `GDP per capita` * `Total Population`) %>% group_by(Region) %>% summarize(mean_Total_GDP=mean(Total_GDP)) %>% arrange(desc(mean_Total_GDP)) %>% kbl(caption = "Mean Total GDP Grouped by Region") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Mean Total GDP grouped by State (Descending in value)
+GDP_Pop_reg %>% mutate(Total_GDP = `GDP per capita` * `Total Population`) %>% group_by(State) %>% summarize(mean_Total_GDP=mean(Total_GDP)) %>% arrange(desc(mean_Total_GDP)) %>% slice(1:15) %>% kbl(caption = "Mean Total GDP Grouped by State (First 15)") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+## Mean Total GDP grouped by Year (Descending in value)
+GDP_Pop_reg %>% mutate(Total_GDP = `GDP per capita` * `Total Population`) %>% group_by(Year) %>% summarize(mean_Total_GDP=mean(Total_GDP)) %>% arrange(desc(mean_Total_GDP)) %>% kbl(caption = "Mean Total GDP Grouped by Year") %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+In order to see the summary statistics of the three numeric variables (GDP per Capita, Population Under 18, and Total Population), I created a table that had 11 different statistics for each variable (mean, sd, variance, median, min, max, count, distinct count, quartile 1, quartile 3, and IQR). I used pivot longer to create two columns, one with the statistic type and one with the value. I then used separate to make a new column from the original statistic column that had the variable name. Lastly, I used pivot longer to shift the data into 12 columns titled by the type of statistic with three corresponding rows, one for each numeric variable. Looking at the statistics, I saw that GDP per Capita had a similar mean and median, meaning that this variable does not have many data points that skew the data. In comparison, the mean of both total population and population under 18 was greater than the median, indicating that there were data points for these values that skewed the mean to the right of the median. Looking at standard deviation, variance, and IQR, we can see that the spread of Total Population varied the most, followed by Population Under 18 and then GDP per Capita. However, this was most likely due to the fact that Total Population was also the greatest in magnitude. I thought it would also be interesting to group each variable by Region, State, Year, and both Region and Year and then find the statistics based on these groupings. Looking at GDP per capita grouped by region, we can see that the mean and standard deviation values are slightly different across the regions. Also, the mean for each region is similar to the median, meaning that there are not significant outliers in the data for this variable. The mean and standard deviations are also similar when grouped by Year. In comparison, when grouped by State we see that individual states vary significantly in their mean GDP per capita. There is also variability in the standard deviation for each state. Total population and Population under 18 are both similar in their distribution when grouped by these different variables. For both, the mean population differs across regions and states. Also, for both variables the mean and median values are dissimilar when grouped by either of the categorical variables, indicating that there are some large values in the dataset that skew the mean Total Population and Population Under 18. There is also variability in the spread of both these variables between different states and regions. The only difference is that the mean Population Under 18 is relatively constant across different years while mean Total Population is generally increasing. Standard deviation for these variables follow the same trend, increasing across years in Total Population while remaining relatively constant for Population Under 18. 
+
+Apart from these general statistics, I thought it would be interesting to find the State, Region, and Year associated with the minimum and maximum values for each numeric variable. Some things I found interesting included the fact that Alaska had the highest GDP per capita value in the dataset while Vermont had the smallest population under 18. It was less surprising to see that California had the largest total population and that Wyoming had the smallest. I also made a correlation matrix for the numeric variables, which showed a strong correlation between Total Population and Population Under 18 but very weak correlations between Total Population and GDP per Capita and Population Under 18 and GDP per Capita. I also wanted to compare the means of the numeric variables across the different regions and found it interesting that the South had the lowest average GDP per Capita but had the largest average Total Population and Population Under 18. This shows that population size is not very indicative of GDP per Capita. I then created a Total GDP variable using mutate by multiplying Total Population by GDP per Capita and decided to look at the mean Total GDP in descending order grouped by Region, then State, and then year. I was not surprised to see that the mean Total GDP was highest in the Northeast because this region also had the highest mean GDP per Capita. However, I was surprised to see that the South had the second highest mean Total GDP given that it had the lowest mean GDP per Capita. This indicates that there may be more of a correlation between total population and Total GDP than there was with GDP per capita. This was backed up by the fact that the three states with the highest total population also had the highest Total GDP. Lastly, it was unsurprising to see that average Total GDP generally increased from 1997 to 2013.
+
+
+#### Correlation Heatmaps 
+
+```{R}
+## Correlation Heatmap for Original Dataset 
+tidycor <- cormat %>% as.data.frame %>% rownames_to_column("Variable 1") %>% pivot_longer(-1,names_to="Variable 2",values_to="Correlation")
+tidycor %>% ggplot(aes(`Variable 1`,`Variable 2`,fill=Correlation)) + geom_tile() + scale_fill_gradient2(low="White",mid="Pink",high="Red") + geom_text(aes(label=round(Correlation,2)),color = "black", size = 4) + theme(axis.text.x = element_text(angle = 90, hjust=1)) + coord_fixed()
+
+## Correlation Heatmap for Dataset with Total GDP variable 
+cormat_mut <- GDP_Pop_reg_Mut %>% select_if(is.numeric) %>% cor(use="pair")
+tidycor_mut <- cormat_mut %>% as.data.frame %>% rownames_to_column("Variable 1") %>% pivot_longer(-1,names_to="Variable 2",values_to="Correlation")
+tidycor_mut %>% ggplot(aes(`Variable 1`,`Variable 2`,fill=Correlation)) + geom_tile() + scale_fill_gradient2(low="White",mid="Pink",high="Red") + geom_text(aes(label=round(Correlation,2)),color = "black", size = 4) + theme(axis.text.x = element_text(angle = 90, hjust=1)) + coord_fixed()
+```
+
+The correlation heatmap for the original dataset shows that Total Population and Population Under 18 have a very strong positive correlation (0.99). This is unsurprising because if a state has a large population of people under 18, then it likely has a large total population. In comparison, Total Population has a very weak and insignificant correlation with GDP per Capita (0.15), as does Population Under 18 (0.13). I was also interested in seeing the correlations between the new Total GDP variable and the original numeric variables. The correlation heatmap with Total GDP included shows that a strong positive correlation exists between Total GDP and Total Population (0.99). There is also a strong positive correlation between Total GDP and Population Under 18 (0.98). A weak correlation exists between Total GDP and GDP per Capita (0.24). In general, I thought that it was interesting that total population can be indicative of Total GDP in a state but not GDP per Capita. Also, this means that a state can have a high GDP per Capita but still a small Total GDP.   
+
+
+#### Barplot of Yearly Average GDP per Capita in each region between 1997 and 2013
+
+```{R}
+library(RColorBrewer)
+mycolors = c(brewer.pal(name="RdBu", n = 9), brewer.pal(name="Purples", n = 9))
+ggplot(GDP_Pop_reg, aes(x = Region, fill=Year)) + geom_bar(aes(y=`GDP per capita`), stat="summary", fun=mean, position="dodge") + scale_y_continuous("Average GDP per Capita", breaks=seq(0, 50000, 2500)) + ggtitle("Yearly Average GDP per Capita per Region 1997-2013") + theme(legend.title = element_text(size = 8), legend.text = element_text(size = 6)) + theme_light() + scale_fill_manual(values = mycolors)
+```
+
+This barplot shows the Average GDP per Capita in each region between 1997 and 2013. In particular, it has the “Region” on the x-axis and the average “GDP per Capita” on the y-axis. Each region also has multiple bars of different color, each representing a different year from 1997 to 2013. Looking at this plot, we can see that the Northeast had the highest mean GDP per Capita for every year. This is followed by the Midwest and West, which both have generally similar mean GDP per Capita. The South has the smallest mean GDP per Capita for every year. The general trend for every region is that average GDP per Capita increased until about 2007 and then declined in 2008. This can most likely be attributed to the recession in the United States that started in 2008. From this decline, the Midwest saw an increase in GDP per Capita until 2013, with a higher GDP per Capita that year than any year before the recession. In comparison, the Northeast and South saw a much smaller increase in GDP per Capita until 2013, but it did not reach or pass the pre-recession peak like in the Midwest. The West saw GDP per Capita remain steady after the decline in 2008, with almost no growth from 2009 to 2013.
+
+
+#### Scatterplot of Total GDP vs Total Population for each state in the US 
+
+```{R}
+ggplot(data= GDP_Pop_reg_Mut, aes(x= `Total Population`, y= `Total_GDP`)) + geom_point(aes(color=State), size = 1.2) + facet_wrap(~Year) +  geom_smooth(method=lm, linetype="dashed", color="seagreen2", fill= "blue") + ggtitle("Total GDP of States According to Total Population (1997-2013)") + xlab("Total Population") + ylab("Total GDP") + theme_light() + theme(legend.key.size = unit(0,"line"), axis.text.x = element_text(size=3.5), axis.text.y = element_text(size=6)) + scale_color_viridis_d(option = "C")
+```
+
+This scatterplot shows the Total GDP vs Total Population of states faceted by year. In particular, it has “Total Population” on the x-axis and “Total GDP” on the y-axis, with each state’s point assigned to a distinct color. Looking at the scatterplot, we can see a strong positive linear correlation between Total Population and Total GDP. This means that higher population in a state is generally associated with higher Total GDP in that state while lower population is generally associated with lower GDP. Looking at the different data points that represent the different states, we can see that no real outliers exist to this trend. While the total population and total GDP within the states changed between years, the general trend of the data remained unchanged, showing that this correlation exists independent of the year.
+
+
+#### K-Means Cluster Sampling
+
+```{R}
+library (cluster)
+## Dataset with Numeric Variables
+data_num <- GDP_Pop_reg_Mut %>% select(`GDP per capita`, `Population Under 18`, `Total Population`, Total_GDP)
+
+## Finding Number of Clusters
+data_num_scale <- data_num %>% scale()
+sil_width<-vector()
+for(i in 2:10){
+  kms <- kmeans(data_num_scale, centers=i) 
+  sil <- silhouette(kms$cluster,dist(data_num_scale)) 
+  sil_width[i]<-mean(sil[,3])}
+ggplot()+geom_line(aes(x=1:10,y=sil_width))+scale_x_continuous(name="k",breaks=1:10)
+
+## Cluster Visualizations
+kmeans1 <- data_num  %>% scale %>% kmeans(2)
+kmeansclust <- data_num %>% mutate(cluster=as.factor(kmeans1$cluster))
+kmeansclust %>% ggplot(aes(`Total Population`, `GDP per capita`, color=cluster)) + geom_point()
+kmeansclust %>% ggplot(aes(`Total Population`, Total_GDP, color=cluster)) + geom_point()
+```
+
+In order to do K-means clustering, I first created a new dataset with only the numeric variables from my overall data. I then scaled my numeric variables and computed silhouette widths to determine the best number of clusters for my data. I chose 2 because it had a silhouette width of around 0.67, which was the highest for any amount and indicated that a reasonable structure had been found in my data. I then ran the K-means cluster analysis. Looking at the cluster means, it is evident that cluster 1 contains the data points with smaller GDP per Capita, Population Under 18, Total Population, and Total GDP. Cluster 1 is also much larger than cluster 2. Cluster 2 has all of the data points with larger GDP per Capita, Population Under 18, Total Population, and Total GDP. Cluster 2 is much smaller than Cluster 1, which could indicate that there are a few points that have extremely high values for the numerical variables. I then visualized the data in two separate plots. The first had GDP per Capita vs Total Population based on the two clusters formed from the four numeric variables. The second had Total GDP vs Total Population based on those clusters. Looking at the first plot, we can see that the two clusters differ in Total Population but not much in GDP per Capita. Within cluster 1, there seems to be no correlation between the two variables. In cluster 2, there may be a weak positive correlation between total population and GDP per Capita. However this correlation is not very significant and not applicable to the variables in general. Cluster 1 varies much more in GDP per capita than cluster 2, but cluster 2 varies more in Total Population. In comparison, the second plot shows that the two clusters differ significantly in Total Population and Total GDP. Also, there seems to be a strong positive correlation between Total Population and Total GDP for both clusters. Lastly, the data points in cluster 2 are much more spread out than cluster 1 for both variables in the second plot. Overall, this indicates that the clusters vary more for Total Population and Total GDP than they do for GDP per Capita and reaffirms that, for each cluster, Total Population has a strong correlation with Total GDP but little to no correlation with GDP per capita.
+
+#### PAM Clustering
+
+```{R}
+## Finding number of clusters
+data_num_scale <- data_num %>% scale()
+for(i in 2:10){
+    pam_fit <- pam(data_num_scale, k = i)
+    sil_width[i] <- pam_fit$silinfo$avg.width}
+ggplot()+geom_line(aes(x=1:10,y=sil_width))+scale_x_continuous(name="k",breaks=1:10)
+
+## Cluster Visualization
+pam1 <- data_num  %>% scale %>% pam(k=2)
+pamclust <- data_num %>% mutate(cluster=as.factor(pam1$cluster))
+pamclust %>% ggplot(aes(`Total Population`, `GDP per capita`, color=cluster)) + geom_point()
+pamclust %>% ggplot(aes(`Total Population`, Total_GDP, color=cluster)) + geom_point()
+
+## Clusters with color mapped to State
+pamclust %>% mutate(state=GDP_Pop_reg_Mut$State) %>% ggplot(aes(`Total Population`, `GDP per capita`, color=state, shape=cluster))+geom_point(size=4)+ggtitle("Pam GDP per capita vs Total Population")
+pamclust %>% mutate(state=GDP_Pop_reg_Mut$State) %>% ggplot(aes(`Total Population`, Total_GDP, color=state, shape=cluster))+geom_point(size=4)+ggtitle("Pam Total GDP vs Total Population")
+
+## Summary for Clusters 
+pamclust %>% group_by(cluster) %>% summarize_if(is.numeric,mean,na.rm=T)
+pam1$silinfo$avg.width
+
+## Visualizing three variables 
+library(plotly)
+pamclust %>% plot_ly(x= ~`Total Population`,  y = ~`GDP per capita`, z = ~Total_GDP, color= ~cluster, type = "scatter3d", mode = "markers")
+
+## Pairwise combinations of the 4 variables 
+library(GGally)
+ggpairs(pamclust, aes(color=cluster))
+
+```
+
+I also thought it would be interesting to conduct PAM clustering as it is seen as a better alternative to K-means clustering to see if there are any significant differences observed. In order to do this, I used the dataset with my scaled numeric variables and computed silhouette widths to determine the best number of clusters for my data. I chose 2 because it had a silhouette width of 0.464217, which was the highest for any amount. This silhouette width indicates that there is weak structure in my data. I then ran PAM cluster analysis. Looking at the cluster medioids, it is evident that cluster 1 has the data points with smaller GDP per Capita, Population Under 18, Total Population, and Total GDP, while cluster 2 has all of the data points with larger GDP per Capita, Population Under 18, Total Population, and Total GDP. Cluster 2 is still much smaller than cluster 1 but larger than it was for K-means clustering. I then visualized the data in various separate plots. The first had GDP per Capita vs Total Population based on the two clusters formed from the four numeric variables. From this plot, we can see that the two clusters vary mostly in Total Population and not much in GDP per capita, similar to what was seen in the plot from K-means clustering. However, cluster 2 is visibly larger in this plot and includes points with a smaller total population than cluster 1. Because cluster 2 now includes many more data points, the weak positive correlation that may have been present in K-means clustering has become even weaker.  The second plot has Total GDP vs Total Population based on the two clusters. It shows that the two clusters differ significantly in Total Population and Total GDP. However, cluster 2 is much more spread out within these two variables while cluster 1 is very close together. Looking at the plot it seems evident that there are many data points with similar Total GDP and Total Population towards the smaller side, causing cluster 1 to be concentrated. In comparison, cluster 2 is more spread out because there are some large values for these variables but they are less frequent. This is why cluster 2 is both smaller and much more spread out than cluster 1. There is a strong positive correlation between Total Population and Total GDP within both clusters. I then visualized the same clusters for the same variables but with the color of the points mapped to the state that point represents. These plots showed the same correlations within the clusters as the previous plots, but also show that cluster 2 consists of a few states with large populations such as California, Texas, and New York, while cluster 1 consists of many more smaller or average sized states. I also created a plot that had Total Population on the x-axis, GDP per capita on the y-axis, and Total GDP on the z-axis. This plot reaffirmed that, for each cluster, Total Population has a strong correlation with Total GDP but little to no correlation with GDP per capita. It also further shows how cluster 2 is more spread out than cluster 1. Lastly, I created a plot that shows the pairwise combinations of the 4 variables. This plot shows that the two clusters differ significantly for three variables: Total Population, Population Under 18, and Total GDP. However, for GDP per capita, the two clusters have overlapping values and do not differ much. Similarly, cluster 2 seems to be much more spread out for all the variables except GDP per capita. Lastly, GDP per capita does not have a strong correlation with any of the other variables for either cluster. In comparison, Total Population and Population Under 18 have strong correlations with Total GDP and with each other for both clusters.
+

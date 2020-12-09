@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>My Website</title>
+    <link>/</link>
+    <description>Recent content on My Website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Wed, 25 Nov 2020 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Project 2: Modeling, Testing, and Predicting</title>
+      <link>/project/project2/</link>
+      <pubDate>Wed, 25 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>Mahad Rehman mr54232  Dataset set.seed(200) library(tidyverse) library(rstatix) nba_games_stats &amp;lt;- read_csv(&amp;quot;nba.games.stats.csv&amp;quot;) nba &amp;lt;- nba_games_stats target &amp;lt;- c(&amp;quot;BRK&amp;quot;, &amp;quot;HOU&amp;quot;, &amp;quot;LAL&amp;quot;, &amp;quot;MIA&amp;quot;, &amp;quot;OKC&amp;quot;) nba &amp;lt;- filter(nba, Team %in% target) nba &amp;lt;- nba %&amp;gt;% sample_frac(0.06) nba &amp;lt;- nba %&amp;gt;% select(Team, Home, WINorLOSS, TeamPoints, X3PointShots, Assists) names(nba)[names(nba) == &amp;quot;X3PointShots&amp;quot;] &amp;lt;- &amp;quot;ThreePointShots&amp;quot; While searching for datasets of interest to me, I came upon a dataset that tracked stats for every NBA game between 2014 and 2018.</description>
+    </item>
+    
+    <item>
+      <title>Project 1</title>
+      <link>/project/project1/</link>
+      <pubDate>Sun, 18 Oct 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>Dataset 1: State GDP per Capita library(tidyverse) library(&amp;quot;httr&amp;quot;) library(&amp;quot;readxl&amp;quot;) GET(&amp;quot;https://query.data.world/s/ub5ocerx4dj5u2igmavzz3r6tn3wxh&amp;quot;, write_disk(tf &amp;lt;- tempfile(fileext = &amp;quot;.xls&amp;quot;))) ## Response [https://download.data.world/file_download/gmoney/gdp-per-capita-by-state/state%20gdp%20per%20capita.xls?auth=eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJwcm9kLXVzZXItY2xpZW50Om1haGFkcmVobWFuIiwiaXNzIjoiYWdlbnQ6bWFoYWRyZWhtYW46OjM1ZWFlOTFiLWJhMWQtNDgxMi1iNjY3LTVlZmIzZGY2ZTAwYyIsImlhdCI6MTYwMjAxOTI1Mywicm9sZSI6WyJ1c2VyIiwidXNlcl9hcGlfYWRtaW4iLCJ1c2VyX2FwaV9yZWFkIiwidXNlcl9hcGlfd3JpdGUiXSwiZ2VuZXJhbC1wdXJwb3NlIjpmYWxzZSwidXJsIjoiMzU5MzYwZTM3MDVlNzhlZDk3ZmNjZTcwMjVhMzZiYTYzNjkwNDFiZCJ9.zIqqPvGuhJu5kQ4a6K0rVgvNQYtIgUy6-66BkbIFDTwbfxUzO_JGsy9pR8Mt3w_4glVm2JZous57jlfU672eZw] ## Date: 2020-12-09 22:43 ## Status: 200 ## Content-Type: application/vnd.ms-excel ## Size: 37.4 kB ## &amp;lt;ON DISK&amp;gt; /tmp/Rtmp7e9lqw/file2ed1168ab1ae.xls State_GDP_per_capita &amp;lt;- read_excel(tf) glimpse(State_GDP_per_capita) ## Rows: 60 ## Columns: 20 ## $ ...1 &amp;lt;chr&amp;gt; &amp;quot;United States&amp;quot;, &amp;quot;Alabama&amp;quot;, &amp;quot;Alaska&amp;quot;, &amp;quot;Arizona&amp;quot;, &amp;quot;Arkansas&amp;quot;, &amp;quot;… ## $ `1997` &amp;lt;dbl&amp;gt; 40781, 31398, 61797, 34434, 30435, 41345, 43558, 54740, 57306,… ## $ `1998` &amp;lt;dbl&amp;gt; 42045, 32164, 59504, 36311, 30513, 43098, 46692, 56416, 61729,… ## $ `1999` &amp;lt;dbl&amp;gt; 43513, 33106, 58609, 38300, 31877, 45541, 49040, 57724, 66794,… ## $ `2000` &amp;lt;dbl&amp;gt; 44714, 33284, 57184, 39185, 31834, 48223, 51524, 61355, 68992,… ## $ `2001` &amp;lt;dbl&amp;gt; 44689, 33312, 58547, 39170, 31685, 47216, 51113, 61872, 71155,… ## $ `2002` &amp;lt;dbl&amp;gt; 45068, 34068, 60101, 39323, 32514, 47880, 50870, 61233, 67853,… ## $ `2003` &amp;lt;dbl&amp;gt; 45831, 34855, 59008, 40769, 33678, 49501, 50743, 61419, 67956,… ## $ `2004` &amp;lt;dbl&amp;gt; 47010, 36702, 60137, 41063, 34936, 51520, 50083, 65034, 69500,… ## $ `2005` &amp;lt;dbl&amp;gt; 48062, 37578, 61125, 43018, 35649, 53320, 51473, 66032, 67525,… ## $ `2006` &amp;lt;dbl&amp;gt; 48880, 37735, 64349, 44086, 35803, 54842, 51515, 67458, 67857,… ## $ `2007` &amp;lt;dbl&amp;gt; 49126, 37522, 67228, 44168, 35205, 55154, 52094, 70096, 66344,… ## $ `2008` &amp;lt;dbl&amp;gt; 48401, 36976, 67527, 41800, 34957, 54454, 51651, 68777, 62535,… ## $ `2009` &amp;lt;dbl&amp;gt; 46680, 35376, 72204, 38232, 33837, 51733, 49731, 65574, 64313,… ## $ `2010` &amp;lt;dbl&amp;gt; 47287, 35915, 69565, 37936, 34667, 51869, 49258, 64909, 62838,… ## $ `2011` &amp;lt;dbl&amp;gt; 47587, 36192, 70573, 38248, 35158, 52067, 49274, 63640, 63793,… ## $ `2012` &amp;lt;dbl&amp;gt; 48157, 36424, 73464, 38537, 34979, 52912, 49622, 63506, 62166,… ## $ `2013` &amp;lt;dbl&amp;gt; 48504, 36611, 69596, 38292, 35848, 53746, 50426, 62473, 60557,… ## $ `2014` &amp;lt;dbl&amp;gt; 49203, 36524, 67367, 38293, 36228, 55247, 51899, 62285, 62761,… ## $ `2015` &amp;lt;dbl&amp;gt; 50054, 36750, 66835, 38276, 36259, 56851, 52558, 62800, 63783,…  Dataset 2: State Populations urlfile = &amp;quot;https://raw.</description>
+    </item>
+    
+    <item>
+      <title>Hello R Markdown</title>
+      <link>/post/2015/07/23/hello-r-markdown/</link>
+      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
+      
+      <guid>/post/2015/07/23/hello-r-markdown/</guid>
+      <description>R Markdown This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
+You can embed an R code chunk like this:
+summary(cars) ## speed dist ## Min. : 4.0 Min. : 2.00 ## 1st Qu.:12.0 1st Qu.: 26.00 ## Median :15.0 Median : 36.00 ## Mean :15.4 Mean : 42.98 ## 3rd Qu.</description>
+    </item>
+    
+    <item>
+      <title>Projects</title>
+      <link>/projects/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/projects/</guid>
+      <description> Check out some of my coding projects below:
+ Wrangling &amp;amp; Exploratory Data Analysis
+ Modeling, Inference, Prediction
+  -- </description>
+    </item>
+    
+    <item>
+      <title>Resume</title>
+      <link>/resume/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/resume/</guid>
+      <description>    </description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Mahad Rehman" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 2: Modeling, Testing, and Predicting</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project2/">Project 2: Modeling, Testing, and Predicting</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         November 25, 2020 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="mahad-rehman-mr54232" class="section level2">
+<h2>Mahad Rehman mr54232</h2>
+</div>
+<div id="dataset" class="section level2">
+<h2>Dataset</h2>
+<pre class="r"><code>set.seed(200)
+library(tidyverse)
+library(rstatix)
+nba_games_stats &lt;- read_csv(&quot;nba.games.stats.csv&quot;)
+nba &lt;- nba_games_stats 
+target &lt;- c(&quot;BRK&quot;, &quot;HOU&quot;, &quot;LAL&quot;, &quot;MIA&quot;, &quot;OKC&quot;)
+nba &lt;- filter(nba, Team %in% target)
+nba &lt;- nba %&gt;% sample_frac(0.06)
+nba &lt;- nba %&gt;% select(Team, Home, WINorLOSS, TeamPoints, X3PointShots, Assists)
+names(nba)[names(nba) == &quot;X3PointShots&quot;] &lt;- &quot;ThreePointShots&quot;</code></pre>
+<p>While searching for datasets of interest to me, I came upon a dataset that tracked stats for every NBA game between 2014 and 2018. Stats included whether the game was home or away and points scored, three pointers made, assists, steals, blocks, and many other categories for both the winning and losing teams. Looking at this dataset, I became interested in seeing whether these different statistical categories had any relationship with whether a team won or lost. The initial dataset had 9,840 observations for 30 different teams and 41 total categories. For my project, I chose 5 teams from the dataset and then randomly selected 6% of the observations from these teams using the sample_frac function in R. This left me with a total of 98 observations for each of the 41 different variables in the dataset. I did this because I thought it would be more realistic for my project to analyze a smaller number of observations for a few teams. I then selected the following variables: Team, Home, WINorLOSS, TeamPoints, X3PointShots, Assists. The Team variable listed which of the 5 teams played in the game that was being analyzed. The Home variable listed whether that team was the Home team or the Away team. The WINorLOSS variable listed whether that team won or lost that game. The TeamPoints variable listed the amount of points scored by that team in that game. The ThreePointShots variable listed the amount of three pointers made by that team in that game. The Assists variable listed the amount of assists made by that team in that game. I decided to focus on these variables because I thought that they were most likely to impact whether a team won or lost a game. My final dataset had 6 variables with 98 rows each, for a total of 588 observations overall.</p>
+</div>
+<div id="manova-anovas-post-hoc-t-tests" class="section level2">
+<h2>MANOVA, ANOVAs, Post-hoc t tests</h2>
+<pre class="r"><code>set.seed(200)
+## MANOVA
+man1 &lt;- manova(cbind(TeamPoints, ThreePointShots, Assists) ~ Team, data = nba)
+summary(man1)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## Team 4 0.48493 4.4828 12 279 1.366e-06 ***
+## Residuals 93
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>## Univariate ANOVAs 
+summary.aov(man1)</code></pre>
+<pre><code>## Response TeamPoints :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Team 4 969.6 242.39 1.5234 0.2018
+## Residuals 93 14797.4 159.11
+##
+## Response ThreePointShots :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Team 4 523.12 130.78 11.441 1.354e-07 ***
+## Residuals 93 1063.02 11.43
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response Assists :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Team 4 104.03 26.007 1.2559 0.293
+## Residuals 93 1925.74 20.707</code></pre>
+<pre class="r"><code>## Post-hoc t tests
+pairwise.t.test(nba$ThreePointShots, nba$Team, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  nba$ThreePointShots and nba$Team 
+## 
+##     BRK     HOU     LAL     MIA    
+## HOU 0.00022 -       -       -      
+## LAL 0.02862 7.1e-09 -       -      
+## MIA 0.28246 1.3e-06 0.23166 -      
+## OKC 0.68698 0.00165 0.01301 0.15094
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>## Boneferroni adjusted significance level
+0.05/14</code></pre>
+<pre><code>## [1] 0.003571429</code></pre>
+<pre class="r"><code>## Type 1 Error Rate
+1-(0.95^14)</code></pre>
+<pre><code>## [1] 0.512325</code></pre>
+<pre class="r"><code>## MANOVA Assumptions
+group &lt;- nba$Team 
+DVs &lt;- nba %&gt;% select(TeamPoints, ThreePointShots, Assists)
+sapply(split(DVs,group), mshapiro_test)</code></pre>
+<pre><code>## BRK HOU LAL MIA OKC
+## statistic 0.9578671 0.9222298 0.9408187 0.9581222
+0.8594462
+## p.value 0.5610326 0.09616237 0.2057715 0.4522817
+0.02369336</code></pre>
+<p>A one-way MANOVA was conducted to determine the effect of the Team on three dependent variables (TeamPoints, ThreePointShots, and Assists). Significant differences were found among the five teams for at least one of the dependent variables, Pillai = 0.48493, F = 4.4828, p &lt; 0.001. Univariate ANOVAs for each dependent variable were conducted as follow-up tests to the MANOVA, using the Bonferroni method for controlling Type I error rates for multiple comparisons. The univariate ANOVAs was only significant for ThreePointShots, indicating that there was a difference in the mean number of three point shots made by the five teams per game (F= 11.441, p&lt; 0.001). Post hoc analysis was performed conducting pairwise comparisons to determine which teams differed for average number of three point shots made per game. The following teams were found to significantly differ: Houston Rockets and Brooklyn Nets (p&lt;0.001); Brooklyn Nets and Los Angeles Lakers (p&lt;0.05); Houston Rockets and Los Angeles Lakers (p&lt;0.001); Houston Rockets and Miami Heat (p&lt;0.001); Houston Rockets and Oklahoma City Thunder (p&lt;0.01); and Oklahoma City Thunder and Los Angeles Lakers (p&lt;0.05). In total, I conducted 1 MANOVA, 3 ANOVAs, and 10 t-tests, for a total of 14 hypothesis tests. The overall Type 1 error rate is 0.512325. I should use a boneferroni adjusted significance level of 0.003571429 in order to keep the overall type I error rate at .05. When using this adjusted significance level, the following teams were still found to significantly differ for the average amount of three pointers made per game: Houston Rockets and Brooklyn Nets; Houston Rockets and Los Angeles Lakers; Houston Rockets and Miami Heat; and Houston Rockets and Oklahoma City Thunder. All other post hoc tests that were significant before the adjustment are no longer significant after the adjustment.</p>
+<p>After testing our data for the null hypothesis that for each team, the response variables come from a multivariate normal distribution, we see that the p-value for OKC is less than 0.05. This means we can reject the null hypothesis and conclude that this data violates the MANOVA assumption that the the response variables for each group come from a multivariate normal distribution.</p>
+</div>
+<div id="randomization-test-mean-difference" class="section level2">
+<h2>Randomization Test Mean Difference</h2>
+<pre class="r"><code>set.seed(200)
+nba %&gt;% group_by(WINorLOSS) %&gt;% summarise(meanthreepoint= mean(ThreePointShots)) %&gt;% summarise(`mean_diff`=diff(meanthreepoint))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   mean_diff
+##       &lt;dbl&gt;
+## 1      2.70</code></pre>
+<pre class="r"><code>three_point &lt;- vector()
+for(i in 1:5000){
+   new&lt;-data.frame(Threepoints=sample(nba$ThreePointShots), Win = nba$WINorLOSS)
+   three_point[i]&lt;-mean(new[new$Win==&quot;W&quot;,]$Threepoints) - mean(new[new$Win==&quot;L&quot;,]$Threepoints)}
+mean(three_point &gt;  2.70 | three_point &lt;  -2.70)</code></pre>
+<pre><code>## [1] 4e-04</code></pre>
+<pre class="r"><code>t.test(data=nba, ThreePointShots ~ WINorLOSS)</code></pre>
+<pre><code>##
+## Welch Two Sample t-test
+##
+## data: ThreePointShots by WINorLOSS
+## t = -3.4941, df = 95.782, p-value = 0.0007219
+## alternative hypothesis: true difference in means is not
+equal to 0
+## 95 percent confidence interval:
+## -4.228376 -1.164601
+## sample estimates:
+## mean in group L mean in group W
+## 8.130435 10.826923</code></pre>
+<pre class="r"><code>## Plot
+{hist(three_point,main=&quot;&quot;,ylab=&quot;&quot;); abline(v = c(-2.70, 2.70),col=&quot;red&quot;)}</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p>I performed a randomization test to see whether the mean number of Three Pointers made by teams that won games and teams that lost games was significantly different. The null hypothesis for my test was that the mean number of Three Pointers made by teams that won games and teams that lost games was the same, meaning the mean difference between these two values is 0. The alternative hypothesis for my test was that the mean number of Three Pointers made by teams that won games and teams that lost games was significantly different, meaning the mean difference between these two values is not 0. After performing the randomization test, I got a p-value of 4e-04. Based on this, I reject the null hypothesis and conclude that the mean number of three pointers made by teams that won games was significantly more than that for teams that lost games. This is the same result as is concluded by running a parametric t-test (p&lt;0.001).</p>
+</div>
+<div id="linear-regression-model" class="section level2">
+<h2>Linear Regression Model</h2>
+<pre class="r"><code>set.seed(200)
+install.packages(&quot;lmtest&quot;, repos = &quot;http://cran.us.r-project.org&quot;)
+library(lmtest)
+install.packages(&quot;sandwich&quot;, repos = &quot;http://cran.us.r-project.org&quot;)
+library(sandwich)
+nba$Assists_c&lt;- nba$Assists- mean(nba$Assists, na.rm = T)
+fit &lt;- lm(TeamPoints ~ Assists_c*Team, data=nba)
+summary(fit)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = TeamPoints ~ Assists_c * Team, data = nba)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -19.3918 -6.8678 -0.0869 5.6015 24.6099
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 95.99061 2.43902 39.356 &lt; 2e-16 ***
+## Assists_c 2.04657 0.53512 3.825 0.000244 ***
+## TeamHOU 9.34273 3.25036 2.874 0.005075 **
+## TeamLAL 5.76195 3.29172 1.750 0.083528 .
+## TeamMIA 3.42983 3.21869 1.066 0.289520
+## TeamOKC 10.92202 3.54123 3.084 0.002727 **
+## Assists_c:TeamHOU -0.28362 0.64861 -0.437 0.662986
+## Assists_c:TeamLAL -0.64940 0.69395 -0.936 0.351937
+## Assists_c:TeamMIA -0.09419 0.80590 -0.117 0.907222
+## Assists_c:TeamOKC 0.45049 1.06603 0.423 0.673626
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 9.815 on 88 degrees of freedom
+## Multiple R-squared: 0.4623, Adjusted R-squared: 0.4073
+## F-statistic: 8.406 on 9 and 88 DF, p-value: 5.931e-09</code></pre>
+<p>The intercept indicates that the mean/predicted points scored for the Brooklyn Nets in a game where they have the mean number of assists is 95.99061 The coefficient 'Assists_c ' indicates that for the Brooklyn Nets: for every one unit increase in number of assists in a game, the predicted number of total points scored will increase by 2.04657 The coefficient 'TeamHOU' indicates that the total points scored in a game for the Houston Rockets when they have the mean number of assists is 9.34273 points more than than the Brooklyn Nets when they have the mean number of assists. The coefficient 'TeamLAL' indicates that the total points scored in a game for the Los Angeles Lakers when they have the mean number of assists is 5.76195 points more than than the Brooklyn Nets when they have the mean number of assists. The coefficient 'TeamMIA' indicates that the total points scored in a game for the Miami Heat when they have the mean number of assists is 3.42983 points more than than the Brooklyn Nets when they have the mean number of assists. The coefficient 'TeamOKC' indicates that the total points scored in a game for the Oklahoma City Thunder when they have the mean number of assists is 10.92202 points more than than the Brooklyn Nets when they have the mean number of assists. The coefficient <code>Assists_c:TeamHOU</code> indicates that the slope of assists on points scored for the Houston Rockets is 0.28362 less than it is for the Brooklyn Nets. The coefficient <code>Assists_c:TeamLAL</code> indicates that the slope of assists on points scored for the Los Angeles Lakers is 0.64940 less than it is for the Brooklyn Nets. The coefficient <code>Assists_c:TeamMIA</code> indicates that the slope of assists on points scored for the Miami Heat is 0.09419 less than it is for the Brooklyn Nets. The coefficient <code>Assists_c:TeamOKC</code> indicates that the slope of assists on points scored for the Oklahoma City Thunder is 0.45049 more than it is for the Brooklyn Nets.</p>
+</div>
+<div id="regression-plot" class="section level2">
+<h2>Regression Plot</h2>
+<pre class="r"><code>ggplot(nba, aes(x=Assists_c, y=TeamPoints, color= Team)) + geom_smooth(method = &quot;lm&quot;, se = F, fullrange = T) + geom_point() + geom_vline(xintercept = mean(nba$Assists_c, na.rm = T), linetype = &quot;dashed&quot;) + xlab(&quot;Assists (mean centered)&quot;) + ylab(&quot;Team Points (per game)&quot;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-5-1.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+<div id="linearity-normality-and-homoskedasticity-assumptions" class="section level2">
+<h2>Linearity, Normality, and Homoskedasticity Assumptions</h2>
+<pre class="r"><code>## Linearity, Homoskedasticity 
+resids&lt;-fit$residuals
+fitvals&lt;-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, col=&quot;red&quot;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>bptest(fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 8.5848, df = 9, p-value = 0.4764</code></pre>
+<pre class="r"><code>## Normality 
+ggplot()+geom_histogram(aes(resids), bins=20)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-6-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot()+geom_qq(aes(sample=resids))+geom_qq_line(aes(sample=resids))</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-6-3.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ks.test(resids, &quot;pnorm&quot;, mean=0, sd(resids))</code></pre>
+<pre><code>## 
+##  One-sample Kolmogorov-Smirnov test
+## 
+## data:  resids
+## D = 0.059272, p-value = 0.8813
+## alternative hypothesis: two-sided</code></pre>
+<pre class="r"><code>shapiro.test(resids)</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  resids
+## W = 0.97975, p-value = 0.1354</code></pre>
+<p>Looking at the scatterplot showing the residual vs. fitted values, we see that the points do not fan out as you go up the x-axis and no strange patterns exist. This indicates that the homoskedasticity and linearity assumptions are met. This conclusion is also shown by the results of the Breuch-Pagan test. Since the p-value is 0.4764, we can fail to reject the null hypothesis and conclude that the data is homoskedastic. Looking at both the histogram and Q-Q plot, we can see that the residuals look normally distributed. This conclusion is formally backed by the results of the Kolmogorov-Smirnov test, which had a p-value of 0.8813, and the Shapiro-Wilk normality test, which had a p-value of 0.1354. Based on these tests, we would fail to reject the null hypothesis and conclude that the distribution of the residuals is normal.</p>
+</div>
+<div id="robust-standard-errors" class="section level2">
+<h2>Robust Standard Errors</h2>
+<pre class="r"><code>coeftest(fit, vcov = vcovHC(fit))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 95.990615 3.124219 30.7247 &lt; 2.2e-16 ***
+## Assists_c 2.046565 0.600838 3.4062 0.0009947 ***
+## TeamHOU 9.342725 3.669076 2.5463 0.0126252 *
+## TeamLAL 5.761954 3.905304 1.4754 0.1436695
+## TeamMIA 3.429831 3.974853 0.8629 0.3905476
+## TeamOKC 10.922020 4.156952 2.6274 0.0101494 *
+## Assists_c:TeamHOU -0.283617 0.687935 -0.4123 0.6811416
+## Assists_c:TeamLAL -0.649402 0.793693 -0.8182 0.4154511
+## Assists_c:TeamMIA -0.094193 0.907614 -0.1038 0.9175798
+## Assists_c:TeamOKC 0.450493 1.118784 0.4027 0.6881724
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p>After recomputing regression results with robust standard errors, we see that the intercept along with the coeffecients 'Assists_c', 'TeamHOU', and 'TeamOKC' are all significant. The intercept indicates that the mean/predicted points scored for the Brooklyn Nets in a game where they have the mean number of assists is 95.990615. The coefficient 'Assists_c ' indicates that for the Brooklyn Nets: for every one unit increase in number of assists in a game, the predicted number of total points scored will increase by 2.046565. The coefficient 'TeamHOU' indicates that the total points scored in a game for the Houston Rockets when they have the mean number of assists is 9.342725 points more than than the Brooklyn Nets when they have the mean number of assists. The coefficient 'TeamOKC' indicates that the total points scored in a game for the Oklahoma City Thunder when they have the mean number of assists is 10.922020 points more than than the Brooklyn Nets when they have the mean number of assists. These are the same significant results that were indicated by the original regression. The coefficients have also not changed. This may be due to the fact that my original regression met the assumption of homoskedasticity, which allowed it to agree with the results found using heteroskedasticity robust standard errors.</p>
+</div>
+<div id="r-squared" class="section level2">
+<h2>R-Squared</h2>
+<pre class="r"><code>sum((fitvals-mean(nba$TeamPoints))^2)/sum((nba$TeamPoints-mean(nba$TeamPoints))^2)</code></pre>
+<pre><code>## [1] 0.462292</code></pre>
+<p>This model explains 0.4623 of the variation in the outcome, as indicated by the R-squared value.</p>
+</div>
+<div id="bootstrapped-standard-errors-by-resampling-observations" class="section level2">
+<h2>Bootstrapped Standard Errors by Resampling Observations</h2>
+<pre class="r"><code>set.seed(200)
+fit &lt;- lm(TeamPoints ~ Assists_c*Team, data=nba)
+samp_distn&lt;-replicate(5000, {
+    nba_dat &lt;- sample_frac(nba, replace=T) 
+    fit &lt;- lm(TeamPoints ~ Assists_c*Team, data=nba_dat) 
+    coef(fit)})
+samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
+<pre><code>## (Intercept) Assists_c TeamHOU TeamLAL TeamMIA TeamOKC
+Assists_c:TeamHOU Assists_c:TeamLAL
+## 1 3.012631 0.5942449 3.580365 3.796493 3.829356 3.941436
+0.6796461 0.78344
+## Assists_c:TeamMIA Assists_c:TeamOKC
+## 1 0.8645244 1.127249</code></pre>
+<pre class="r"><code>samp_distn%&gt;%t%&gt;%as.data.frame%&gt;%gather%&gt;%group_by(key)%&gt;%
+     summarize(lower=quantile(value,.025), upper=quantile(value,.975))</code></pre>
+<pre><code>## # A tibble: 10 x 3
+##    key                lower   upper
+##    &lt;chr&gt;              &lt;dbl&gt;   &lt;dbl&gt;
+##  1 (Intercept)       89.8   102.   
+##  2 Assists_c          0.916   3.35 
+##  3 Assists_c:TeamHOU -1.64    1.11 
+##  4 Assists_c:TeamLAL -2.27    0.856
+##  5 Assists_c:TeamMIA -1.83    1.52 
+##  6 Assists_c:TeamOKC -1.60    2.75 
+##  7 TeamHOU            2.86   17.0  
+##  8 TeamLAL           -1.61   13.4  
+##  9 TeamMIA           -3.97   11.0  
+## 10 TeamOKC            3.67   19.3</code></pre>
+<p>Compared to the original SEs, the bootstrapped standard errors are slightly larger for every coefficient, but the difference is not very significant. For example, the original coefficient on Assists_c had an SE of 0.53512 while the boostrapped coefficient has an SE of 0.5942449. The boostrapped SEs and the robust SEs are both very similar, with the robust SEs generally slightly larger than the boostrapped SEs. For example, the robust coefficient on 'TeamHOU' has an SE of 3.669076 while the boostrapped coefficient has an SE of 3.580365. In general, there is no significant or impactful difference in SEs between the original, robust, and bootstrapped SEs. The boostrapped SEs indicate that the intercept along with the coeffecients 'Assists_c', 'TeamHOU', and 'TeamOKC' are significant, which is the same conclusion made by the models using original SEs and robust SEs.</p>
+<pre class="r"><code>class_diag&lt;-function(probs,truth){
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  f1=2*(sens*ppv)/(sens+ppv)
+
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE){
+    truth&lt;-as.numeric(truth)-1}
+  
+  #CALCULATE EXACT AUC
+  ord&lt;-order(probs, decreasing=TRUE)
+  probs &lt;- probs[ord]; truth &lt;- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+  TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+  
+  n &lt;- length(TPR)
+  auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,f1,auc)
+}</code></pre>
+</div>
+<div id="logistic-regression" class="section level2">
+<h2>Logistic Regression</h2>
+<pre class="r"><code>set.seed(200)
+nba$ThreePointShots_c&lt;- nba$ThreePointShots- mean(nba$ThreePointShots, na.rm = T)
+nba&lt;- nba %&gt;% mutate(Result=ifelse(WINorLOSS==&quot;W&quot;,1,0))
+fit2 &lt;-glm(Result~ Home + ThreePointShots_c, data=nba, family=&quot;binomial&quot;)
+summary(fit2)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = Result ~ Home + ThreePointShots_c, family
+= &quot;binomial&quot;,
+## data = nba)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -2.0188 -1.0465 0.5302 1.0595 1.8182
+##
+## Coefficients:
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -0.21096 0.31015 -0.680 0.49639
+## HomeHome 0.71515 0.43636 1.639 0.10124
+## ThreePointShots_c 0.18738 0.06125 3.059 0.00222 **
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for binomial family taken to be 1)
+##
+## Null deviance: 135.49 on 97 degrees of freedom
+## Residual deviance: 121.10 on 95 degrees of freedom
+## AIC: 127.1
+##
+## Number of Fisher Scoring iterations: 4</code></pre>
+<pre class="r"><code>exp(coef(fit2))</code></pre>
+<pre><code>##       (Intercept)          HomeHome ThreePointShots_c 
+##         0.8098077         2.0444856         1.2060867</code></pre>
+<p>The intercept indicates that the odds of winning for an away team that makes the average number of three pointers is 0.8098077. The coefficient <code>HomeHome</code> indicates that the odds of winning for a home team that makes the average number of three pointers is 2.0444856 times that of an away team that makes the average number of three pointers, which is 1.65564. The coefficient <code>ThreePointShots</code> indicates that every three pointer made by an away team multiplies its odds of winning by 1.2060867.</p>
+</div>
+<div id="confusion-matrix" class="section level2">
+<h2>Confusion Matrix</h2>
+<pre class="r"><code>prob&lt;-predict(fit2,type=&quot;response&quot;)
+pred&lt;-ifelse(prob&gt;.5,1,0)
+table(predict=pred, truth=nba$Result)%&gt;%addmargins</code></pre>
+<pre><code>##        truth
+## predict  0  1 Sum
+##     0   28 13  41
+##     1   18 39  57
+##     Sum 46 52  98</code></pre>
+</div>
+<div id="classification-diagnostics" class="section level2">
+<h2>Classification Diagnostics</h2>
+<pre class="r"><code>class_diag(prob, nba$Result)</code></pre>
+<pre><code>##         acc sens      spec       ppv        f1       auc
+## 1 0.6836735 0.75 0.6086957 0.6842105 0.7155963 0.7192726</code></pre>
+<pre class="r"><code>## Accuracy
+(39 + 28)/ 98</code></pre>
+<pre><code>## [1] 0.6836735</code></pre>
+<pre class="r"><code>## Sensitivity (TPR)
+39/52</code></pre>
+<pre><code>## [1] 0.75</code></pre>
+<pre class="r"><code>## Specificity (TNR)
+28/46</code></pre>
+<pre><code>## [1] 0.6086957</code></pre>
+<pre class="r"><code>## Precision (PPV)
+39/57</code></pre>
+<pre><code>## [1] 0.6842105</code></pre>
+<pre class="r"><code>## AUC
+0.7192726</code></pre>
+<pre><code>## [1] 0.7192726</code></pre>
+<p>The accuracy of this model is 0.6836735, which indicates that it correctly classified teams that won and lost 68.4% of the time. The sensitivity of the model is 0.75, which means it correctly classified teams that won games 75% of the time. The specificity of the model is 0.6086957, which means it correctly classified teams that lost games 60.9% of the time. The precision of the model is 0.6842105, which means that 68.4% of games predicted as wins in this model were actually wins. In general, this model seems better at predicting wins than losses, with 39 out of 52 wins correctly predicted compared to 28 of 46 losses correctly predicted. The AUC for this model is 0.7192726, which is fair but not great.</p>
+</div>
+<div id="density-plot" class="section level2">
+<h2>Density PLot</h2>
+<pre class="r"><code>nba$logit&lt;-predict(fit2)
+nba %&gt;%ggplot()+geom_density(aes(logit,color=WINorLOSS,fill=WINorLOSS), alpha=.4)+
+theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab(&quot;logit (log-odds)&quot;)+
+geom_rug(aes(logit,color=WINorLOSS))</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-14-1.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+<div id="rocplot-and-auc" class="section level2">
+<h2>ROCplot and AUC</h2>
+<pre class="r"><code>## ROCplot
+install.packages(&quot;plotROC&quot;, repos = &quot;http://cran.us.r-project.org&quot;)
+library(plotROC)
+ROCplot&lt;-ggplot(nba)+geom_roc(aes(d=Result,m=prob), n.cuts=0)
+ROCplot</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-15-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>## AUC
+calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.7192726</code></pre>
+<p>The AUC for this model is 0.7192726, which indicates that this model does a fair job of predicting wins and losses from whether the team played at home or away and how many three-pointers it made. However, this indicates that other variables may be needed to more accurately predict wins and losses.</p>
+</div>
+<div id="in-sample-logistic-regression-with-all-variables" class="section level2">
+<h2>In Sample Logistic Regression with All Variables</h2>
+<pre class="r"><code>set.seed(200)
+nba$TeamPoints_c&lt;- nba$TeamPoints- mean(nba$TeamPoints, na.rm = T)
+nba2&lt;-nba %&gt;% select(Team, Home, TeamPoints_c, ThreePointShots_c, Assists_c, Result)
+fit3 &lt;- glm(Result ~ .,data=nba2,family=&quot;binomial&quot;)
+summary(fit3)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = Result ~ ., family = &quot;binomial&quot;, data =
+nba2)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -2.4426 -0.6969 0.1485 0.7363 2.1528
+##
+## Coefficients:
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -0.98241 0.67160 -1.463 0.14352
+## TeamHOU 2.63989 1.04016 2.538 0.01115 *
+## TeamLAL -0.64559 0.93572 -0.690 0.49024
+## TeamMIA 0.91515 0.82852 1.105 0.26935
+## TeamOKC 1.51330 0.93875 1.612 0.10695
+## HomeHome 0.76874 0.59798 1.286 0.19859
+## TeamPoints_c 0.11048 0.03627 3.046 0.00232 **
+## ThreePointShots_c -0.07236 0.09397 -0.770 0.44124
+## Assists_c 0.13379 0.08900 1.503 0.13278
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for binomial family taken to be 1)
+##
+## Null deviance: 135.489 on 97 degrees of freedom
+## Residual deviance: 84.923 on 89 degrees of freedom
+## AIC: 102.92
+##
+## Number of Fisher Scoring iterations: 5</code></pre>
+<pre class="r"><code>prob3 &lt;- predict(fit3,type=&quot;response&quot;)
+class_diag(prob3, nba2$Result)</code></pre>
+<pre><code>## acc sens spec ppv f1 auc
+## 1 0.8163265 0.8269231 0.8043478 0.8269231 0.8269231
+0.8858696</code></pre>
+<pre class="r"><code>table(predict=as.numeric(prob3&gt;.5),truth=nba2$Result)%&gt;%addmargins</code></pre>
+<pre><code>##        truth
+## predict  0  1 Sum
+##     0   37  9  46
+##     1    9 43  52
+##     Sum 46 52  98</code></pre>
+<p>After computing in-sample classification diagnostics for the logistic regression using all of my variables, I got the following results. The accuracy of this model is 0.8163265, which indicates that it correctly classified teams that won and lost 81.6% of the time. The sensitivity of the model is 0.8269231, which means it correctly classified teams that won games 82.7% of the time. The specificity of the model is 0.8043478, which means it correctly classified teams that lost games 80.4% of the time. The precision of the model is 0.8269231, which means that 82.7% of games predicted as wins in this model were actually wins. This model does a better job of predicting wins and losses than the previous logistic regression, with 43 out of 52 wins correctly predicted and 37 of 46 losses correctly predicted. The AUC for this model is 0.8858696, which indicates that it does a good job of predicting wins and losses based on the other variables in the dataset. This is much better than the AUC of 0.7192726 from the previous model that only used whether the team played at home or away and how many three-pointers it made to predict wins and losses. This indicates that including other the variables in the logistic regression allowed it to more accurately predict wins and losses.</p>
+</div>
+<div id="out-of-sample-logistic-regression-with-all-variables" class="section level2">
+<h2>Out of Sample Logistic Regression with All Variables</h2>
+<pre class="r"><code>set.seed(1234)
+k=10
+data&lt;-nba2[sample(nrow(nba2)),]
+folds&lt;-cut(seq(1:nrow(nba2)),breaks=k,labels=F)
+diags&lt;-NULL
+for(i in 1:k){
+     train&lt;-data[folds!=i,]
+     test&lt;-data[folds==i,]
+     truth&lt;-test$Result
+     fit&lt;-glm(Result ~ ., data=train,family=&quot;binomial&quot;)
+     probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+     diags&lt;-rbind(diags,class_diag(probs,truth))}
+summarize_all(diags,mean)</code></pre>
+<pre><code>##         acc  sens      spec  ppv        f1       auc
+## 1 0.7311111 0.715 0.7642857 0.77 0.7015407 0.8592619</code></pre>
+<p>After computing out of sample classification diagnostics for the logistic regression using all of my variables, I got the following results. The accuracy of this model is 0.7311111, which indicates that it correctly classified teams that won and lost 73.1% of the time. The sensitivity of the model is 0.715, which means it correctly classified teams that won games 71.5% of the time. The specificity of the model is 0.7642857, which means it correctly classified teams that lost games 76.4% of the time. The precision of the model is 0.77, which means that 77% of games predicted as wins in this model were actually wins. The fact that all classification diagnostics are lower for this model than the previous model indicates that this model does a worse job of predicting wins and losses. The AUC when predicting out of sample is 0.8592619, which is still good but slightly lower than the one calculated in the previous model. This shows that this model may show signs of slight overfitting. However, it still does a good job of predicting wins and losses, especially compared to the model that only used whether the team played at home or away and how many three-pointers it made to predict wins and losses (AUC=0.7192726).</p>
+</div>
+<div id="lasso" class="section level2">
+<h2>Lasso</h2>
+<pre class="r"><code>install.packages(&quot;glmnet&quot;, repos = &quot;http://cran.us.r-project.org&quot;)
+library(glmnet)
+set.seed(1234)
+nba_preds &lt;- model.matrix(fit3)[,-1]
+nba_resp &lt;- as.matrix(nba2$Result)
+cv&lt;-cv.glmnet(nba_preds,nba_resp,family=&quot;binomial&quot;)
+lasso_fit&lt;-glmnet(nba_preds,nba_resp,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
+coef(lasso_fit)</code></pre>
+<pre><code>## 9 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                            s0
+## (Intercept)        0.14537478
+## TeamHOU            0.09944454
+## TeamLAL           -0.13370486
+## TeamMIA            .         
+## TeamOKC            .         
+## HomeHome           .         
+## TeamPoints_c       0.05637167
+## ThreePointShots_c  .         
+## Assists_c          .</code></pre>
+<pre class="r"><code>prob4 &lt;- predict(lasso_fit, nba_preds, type=&quot;response&quot;)
+class_diag(prob4, nba2$Result)</code></pre>
+<pre><code>##        acc      sens      spec  ppv        f1       auc
+## 1 0.755102 0.8076923 0.6956522 0.75 0.7777778 0.8292224</code></pre>
+<pre class="r"><code>table(predict=as.numeric(prob4&gt;.5),truth=nba2$Result) %&gt;% addmargins</code></pre>
+<pre><code>##        truth
+## predict  0  1 Sum
+##     0   32 10  42
+##     1   14 42  56
+##     Sum 46 52  98</code></pre>
+<p>After conducting LASSO, the variables TeamHOU, TeamLAL, TeamPoints_c, are retained, evidenced by the fact that their coeffecient estimates are non-zero.</p>
+</div>
+<div id="lasso-10-fold-cv" class="section level2">
+<h2>Lasso 10-fold CV</h2>
+<pre class="r"><code>nba3 &lt;- as.data.frame(nba_preds) %&gt;% select(1,2,6)
+nba3 &lt;- nba3 %&gt;% mutate(Result = nba2$Result)
+fit4 &lt;- glm(Result ~ .,data=nba3,family=&quot;binomial&quot;)
+summary(fit4)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = Result ~ ., family = &quot;binomial&quot;, data =
+nba3)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -2.2176 -0.7029 0.2387 0.7284 1.7478
+##
+## Coefficients:
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) 0.1891 0.3228 0.586 0.5580
+## TeamHOU 1.4256 0.7474 1.907 0.0565 .
+## TeamLAL -1.1960 0.6520 -1.834 0.0666 .
+## TeamPoints_c 0.1237 0.0283 4.371 1.24e-05 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for binomial family taken to be 1)
+##
+## Null deviance: 135.489 on 97 degrees of freedom
+## Residual deviance: 91.667 on 94 degrees of freedom
+## AIC: 99.667
+##
+## Number of Fisher Scoring iterations: 5</code></pre>
+<pre class="r"><code>set.seed(1234)
+k=10
+data&lt;-nba3[sample(nrow(nba3)),]
+folds&lt;-cut(seq(1:nrow(nba3)),breaks=k,labels=F)
+diags&lt;-NULL
+for(i in 1:k){
+     train&lt;-data[folds!=i,]
+     test&lt;-data[folds==i,]
+     truth&lt;-test$Result
+     fit&lt;-glm(Result ~ ., data=train,family=&quot;binomial&quot;)
+     probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+     diags&lt;-rbind(diags,class_diag(probs,truth))}
+summarize_all(diags,mean)</code></pre>
+<pre><code>## acc sens spec ppv f1 auc
+## 1 0.7522222 0.7591667 0.7559524 0.7645238 0.7380381
+0.8782103</code></pre>
+<p>The out-of-sample AUC calculated after performing 10-fold CV using only the variables lasso selected is 0.8782103, which shows that it does a good job of predicting wins and losses. This is higher than the out-of-sample AUC of the full model (0.8592619). This indicates that the new model is better at predicting wins and losses out of sample than the original model. The out-of-sample AUC of the new model is slightly smaller than the in-sample AUC of the original model (0.8858696) but larger than the in-sample AUC of the model using only the variables lasso selected (0.8292224). The fact that the out-of-sample AUC does not decrease for the new model compared to the in-sample AUC like it does for the original model shows that this new model does not show signs of overfitting. This indicates that the new model may be the most accurate in predicting wins and losses.</p>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>
