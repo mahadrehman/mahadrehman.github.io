@@ -28,7 +28,7 @@ string2="We have to extract these numbers 12, 47, 48 The integers numbers are al
 re.findall(r"\d{2,5}", string2)
 ```
 
-In this case, we used `\d` to identify that we are looking for digits and the curly brackets to specify how many times we expect digits to occur in a row. This allowed us to find numbers between 2 and 5 digits long. What if we wanted to identify very long sequences that varied in length like IP adresses? Regex can help with that too!
+In this case, we used `\d` to identify that we are looking for digits and `{}` to specify how many times we expect digits to occur in a row. This allowed us to find all of the numbers in the paragraph that were between 2 and 5 digits long. What if we wanted to identify very long sequences that varied in length like IP adresses? Regex can help with that too!
 
 ```{python}
 import re
@@ -43,7 +43,7 @@ Jan 13 17:52:08: ACCEPT service http from 213.121.184.130 to firewall(pub-nic), 
 re.findall(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", string3)
 ```
 
-We were able to identify the different IP adresses in this string by using `\d{1,3}` to specify that we wanted digits between 1 and 3 in length, followed by a period. The period was specified using `\.`. Here, the `\` allows us to escape from the typical meaning of `.`. By repeating this three more times, we perfectly describe the sequence of an IP adress, even with the large amount of variability within them. Imagine having to read through all of those numbers without the help of regex!
+We were able to identify the different IP adresses in this string by using `\d{1,3}` to specify that we wanted digits between 1 and 3 in length, followed by a period. The period was specified using `\.`. Here, the `\` allows us to escape from the typical meaning of `.`. By repeating this three more times, we perfectly describe the sequence of an IP adress, even accounting for the large amount of variability within them. Imagine having to read through all of those numbers without the help of regex!
 
 If you're a Biology major like me, you might be asking yourself: why would I ever use regex? Turns out this function can be extremely useful in analyzing something us Biology majors have a lot of experience with: DNA sequences. Imagine you have a very long DNA sequence, and you want to match restriction enzyme binding sites ANTAAT and GCRWTG. Per the IUPAC nucleotide code, N is any base, R is A or G, W is A or T. This means we have some variability in the exact DNA sequence we are looking for, which regex can help us with. 
 
@@ -56,7 +56,7 @@ re.findall(r"GC[A,G][A,T]TG", string4)
 
 ![](/post/2020-12-10-using-regex-in-python_files/mindblowncat.jpg){width=75% height=75%}
 
-I know, my mind is blown too! Look at how long that DNA sequence was! Just by using brackets to identify the possible characters at unspecified bases, we were able to find the exact sequence of the restriction enzyme binding sites. I sure wish I knew regex before having to do my Genetics homework!
+I know, my mind is blown too! Look at how long that DNA sequence was! Just by using `[]` to identify the possible characters at unspecified bases, we were able to find the exact sequence of the restriction enzyme binding sites. I sure wish I knew regex before having to do my Genetics homework!
 
 But what if you want to analyze a dataset that you have loaded in R using a function from python? Is there a way for R and Python talk to each other and share information? There sure is! We can use a package in R called reticulate. Here's an example.
 
