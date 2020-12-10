@@ -1,0 +1,76 @@
+---
+title: Using Regex in Python
+author: Mahad Rehman
+date: '2020-12-10'
+slug: using-regex-in-python
+categories: []
+tags: []
+description: ''
+---
+
+Regular Expressions (known as regex) allow you to search for matches of a sequence of characters that are of interest to you within strings or datasets. This can be extremely useful, especially for replacing strings, reformatting data, or identifying the occurences of cases within some data that match a certain criteria. Before we learn how to use regex, it would be beneficial to familiarize yourself with the symbols in this table.
+
+![](/post/2020-12-10-using-regex-in-python_files/Regex Symbols.png){width=60% height=60%}
+
+Let's look at a simple example. Say you have a string containing three letter words, and you are only interested in the occurence of words ending in "at." The following code would allow you to grab the all such instances. 
+
+```{python}
+import re
+string1 = "see cat far pat sad eat"
+re.findall(r".at", string1)
+```
+
+Here, we used the re.findall function because it allows us to find all the occurrences which match our regular expression. Notice that you must prefix the regular expression with an r. Since we were only interesed in the last two letters we used "." for the first as it corresponds to any character. This can easily be applied to longer sequences as well. Imagine that we are interested in pulling out the numbers from the following sentence: "We have to extract these numbers 12, 47, 48 The integers numbers are also interesting: 189 2036 314\',\' is a separator, so please extract these numbers 125,789,1450 and also these 564,90456 We like to offer you 7890$ per month in order to complete this task... we are joking." The following code would do the job.
+
+```{python}
+import re
+string2="We have to extract these numbers 12, 47, 48 The integers numbers are also interesting: 189 2036 314\',\' is a separator, so please extract these numbers 125,789,1450 and also these 564,90456 We like to offer you 7890$ per month in order to complete this task... we are joking"
+re.findall(r"\d{2,5}", string2)
+```
+
+In this case, we used the characters "\d" to identify that we are looking for digits and the curly brackets to specify how many times we expect digits to occur in a row. This allowed us to find numbers between 2 and 5 digits long. What if we wanted to identify very long sequences that varied in length like IP adresses? Regex can help with that too!
+
+```{python}
+import re
+string3= "Jan 13 00:48:59: DROP service 68->67(udp) from 213.92.153.167 to 69.43.107.219, prefix: \"spoof iana-0/8\" \
+(in: eth0 69.43.112.233(38:f8:b7:90:45:92):68 -> 217.70.100.113(00:21:87:79:9c:d9):67 UDP len:576 ttl:64) \
+Jan 13 12:02:48: ACCEPT service dns from 74.125.186.208 to firewall(pub-nic-dns), prefix: \"none\" \
+(in: eth0 74.125.186.208(00:1a:e3:52:5d:8e):36008 -> 140.105.63.158(00:1a:9a:86:2e:62):53 UDP len:82 ttl:38) \
+Jan 13 17:44:52: DROP service 68->67(udp) from 172.45.240.237 to 217.70.177.60, prefix: \"spoof iana-0/8\" \
+(in: eth0 216.34.90.16(00:21:91:fe:a2:6f):68 -> 69.43.85.253(00:07:e1:7c:53:db):67 UDP len:328 ttl:64) \
+Jan 13 17:52:08: ACCEPT service http from 213.121.184.130 to firewall(pub-nic), prefix: \"none\" \
+(in: eth0 213.121.184.130(00:05:2e:6a:a4:14):8504 -> 140.105.63.164(00:60:11:92:ed:1b):80 TCP flags: ****S* len:52 ttl:109)"
+re.findall(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", string3)
+```
+
+We were able to identify the different IP adresses in this string by using "\d{1,3}" to specify that we wanted digits between 1 and 3 in length, followed by a period. The period was specified using "\.". Here, the "\" allows us to escape from the typical meaning of ".". By repeating this three more times, we perfectly describe the sequence of an IP adress, even with the large amount of variability within them. Imagine having to read through all of those numbers without the help of regex!
+
+If you're a Biology major like me, you might be asking yourself: why would I ever use regex? Turns out this function can be extremely useful in analyzing something us Biology majors have a lot of experience with: DNA sequences. Imagine you have a very long DNA sequence, and you want to match restriction enzyme binding sites ANTAAT and GCRWTG. Per the IUPAC nucleotide code, N is any base, R is A or G, W is A or T. This means we have some variability in the exact DNA sequence we are looking for, which regex can help us with. 
+
+```{python}
+import re
+string4="ATGGCAATAACCCCCCGTTTCTACTTCTAGAGGAGAAAAGTATTGACATGAGCGCTCCCGGCACAAGGGCCAAAGAAGTCTCCAATTTCTTATTTCCGAATGACATGCGTCTCCTTGCGGGTAAATCACCGACCGCAATTCATAGAAGCCTGGGGGAACAGATAGGTCTAATTAGCTTAAGAGAGTAAATCCTGGGATCATTCAGTAGTAACCATAAACTTACGCTGGGGCTTCTTCGGCGGATTTTTACAGTTACCAACCAGGAGATTTGAAGTAAATCAGTTGAGGATTTAGCCGCGCTATCCGGTAATCTCCAAATTAAAACATACCGTTCCATGAAGGCTAGAATTACTTACCGGCCTTTTCCATGCCTGCGCTATACCCCCCCACTCTCCCGCTTATCCGTCCGAGCGGAGGCAGTGCGATCCTCCGTTAAGATATTCTTACGTGTGACGTAGCTATGTATTTTGCAGAGCTGGCGAACGCGTTGAACACTTCACAGATGGTAGGGATTCGGGTAAAGGGCGTATAATTGGGGACTAACATAGGCGTAGACTACGATGGCGCCAACTCAATCGCAGCTCGAGCGCCCTGAATAACGTACTCATCTCAACTCATTCTCGGCAATCTACCGAGCGACTCGATTATCAACGGCTGTCTAGCAGTTCTAATCTTTTGCCAGCATCGTAATAGCCTCCAAGAGATTGATGATAGCTATCGGCACAGAACTGAGACGGCGCCGATGGATAGCGGACTTTCGGTCAACCACAATTCCCCACGGGACAGGTCCTGCGGTGCGCATCACTCTGAATGTACAAGCAACCCAAGTGGGCCGAGCCTGGACTCAGCTGGTTCCTGCGTGAGCTCGAGACTCGGGATGACAGCTCTTTAAACATAGAGCGGGGGCGTCGAACGGTCGAGAAAGTCATAGTACCTCGGGTACCAACTTACTCAGGTTATTGCTTGAAGCTGTACTATTTTAGGGGGGGAGCGCTGAAGGTCTCTTCTTCTCATGACTGAACTCGCGAGGGTCGTGAAGTCGGTTCCTTCAATGGTTAAAAAACAAAGGCTTACTGTGCGCAGAGGAACGCCCATCTAGCGGCTGGCGTCTTGAATGCTCGGTCCCCTTTGTCATTCCGGATTAATCCATTTCCCTCATTCACGAGCTTGCGAAGTCTACATTGGTATATGAATGCGACCTAGAAGAGGGCGCTTAAAATTGGCAGTGGTTGATGCTCTAAACTCCATTTGGTTTACTCGTGCATCACCGCGATAGGCTGACAAAGGTTTAACATTGAATAGCAAGGCACTTCCGGTCTCAATGAACGGCCGGGAAAGGTACGCGCGCGGTATGGGAGGATCAAGGGGCCAATAGAGAGGCTCCTCTCTCACTCGCTAGGAGGCAAATGTAAAACAATGGTTACTGCATCGATACATAAAACATGTCCATCGGTTGCCCAAAGTGTTAAGTGTCTATCACCCCTAGGGCCGTTTCCCGCATATAAACGCCAGGTTGTATCCGCATTTGATGCTACCGTGGATGAGTCTGCGTCGAGCGCGCCGCACGAATGTTGCAATGTATTGCATGAGTAGGGTTGACTAAGAGCCGTTAGATGCGTCGCTGTACTAATAGTTGTCGACAGACCGTCGAGATTAGAAAATGGTACCAGCATTTTCGGAGGTTCTCTAACTAGTATGGATTGCGGTGTCTTCACTGTGCTGCGGCTACCCATCGCCTGAAATCCAGCTGGTGTCAAGCCATCCCCTCTCCGGGACGCCGCATGTAGTGAAACATATACGTTGCACGGGTTCACCGCGGTCCGTTCTGAGTCGACCAAGGACACAATCGAGCTCCGATCCGTACCCTCGACAAACTTGTACCCGACCCCCGGAGCTTGCCAGCTCCTCGGGTATCATGGAGCCTGTGGTTCATCGCGTCCGATATCAAACTTCGTCATGATAAAGTCCCCCCCTCGGGAGTACCAGAGAAGATGACTACTGAGTTGTGCGAT"
+re.findall(r"A[A,T,C,G]TAAT", string4)
+re.findall(r"GC[A,G][A,T]TG", string4)
+```
+
+![](/post/2020-12-10-using-regex-in-python_files/mindblowncat.jpg){width=75% height=75%}
+
+I know, my mind is blown too! Look at how long that DNA sequence was! Just by using brackets to identify the possible characters at unspecified bases, we were able to find the exact sequence of the restriction enzyme binding sites. I sure wish I knew regex before having to do my Genetics homework!
+
+But what if you want to analyze a dataset that you have loaded in R using a function from python? Is there a way for R and Python talk to each other and share information? There sure is! We can use a package in R called reticulate. Here's an example.
+
+```{R}
+library(reticulate)
+library(ggplot2)
+presidential <- presidential
+```
+
+In this case, I am interesed in the presidential dataset that looks at the terms of 11 presidents from Eisenhower to Obama. This dataset is part of the ggplot2 package, so it would make sense for me to load it into R. But now I want to conduct some analysis in python. As long as I load the reticulate package, the two can easily share information across code chunks!
+
+```{python}
+r.presidential
+r.presidential[r.presidential.party.str.contains("Democratic$", regex=True)]
+```
+
+Here, I used regex in python to identify which of the 11 presidents in the dataset belonged to the Democratic party. As you can see, reticulate made it extremely easy to share information between R and python!
