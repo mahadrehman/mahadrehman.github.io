@@ -20,7 +20,7 @@ string1 = "see cat far pat sad eat"
 re.findall(r".at", string1)
 ```
 
-Here, we used the re.findall function because it allows us to find all the occurrences which match our regular expression. Notice that you must prefix the regular expression with an r. Since we were only interesed in the last two letters we used "." for the first as it corresponds to any character. This can easily be applied to longer sequences as well. Imagine that we are interested in pulling out the numbers from the following sentence: "We have to extract these numbers 12, 47, 48 The integers numbers are also interesting: 189 2036 314\',\' is a separator, so please extract these numbers 125,789,1450 and also these 564,90456 We like to offer you 7890$ per month in order to complete this task... we are joking." The following code would do the job.
+Here, we used the re.findall function because it allows us to find all occurrences which match our regular expression. Notice that you must prefix the regular expression with an r. Since we were only interesed in the last two letters, we used `.` for the first as it corresponds to any character. This can easily be applied to longer sequences as well. Imagine that we are interested in pulling out the numbers from the following paragraph from a regex game: "We have to extract these numbers 12, 47, 48 The integers numbers are also interesting: 189 2036 314\',\' is a separator, so please extract these numbers 125,789,1450 and also these 564,90456 We like to offer you 7890$ per month in order to complete this task... we are joking." The following code would do the job.
 
 ```{python}
 import re
@@ -28,7 +28,7 @@ string2="We have to extract these numbers 12, 47, 48 The integers numbers are al
 re.findall(r"\d{2,5}", string2)
 ```
 
-In this case, we used the characters "\d" to identify that we are looking for digits and the curly brackets to specify how many times we expect digits to occur in a row. This allowed us to find numbers between 2 and 5 digits long. What if we wanted to identify very long sequences that varied in length like IP adresses? Regex can help with that too!
+In this case, we used `\d` to identify that we are looking for digits and the curly brackets to specify how many times we expect digits to occur in a row. This allowed us to find numbers between 2 and 5 digits long. What if we wanted to identify very long sequences that varied in length like IP adresses? Regex can help with that too!
 
 ```{python}
 import re
@@ -43,7 +43,7 @@ Jan 13 17:52:08: ACCEPT service http from 213.121.184.130 to firewall(pub-nic), 
 re.findall(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", string3)
 ```
 
-We were able to identify the different IP adresses in this string by using "\d{1,3}" to specify that we wanted digits between 1 and 3 in length, followed by a period. The period was specified using "\.". Here, the "\" allows us to escape from the typical meaning of ".". By repeating this three more times, we perfectly describe the sequence of an IP adress, even with the large amount of variability within them. Imagine having to read through all of those numbers without the help of regex!
+We were able to identify the different IP adresses in this string by using `\d{1,3}` to specify that we wanted digits between 1 and 3 in length, followed by a period. The period was specified using `\.`. Here, the `\` allows us to escape from the typical meaning of `.`. By repeating this three more times, we perfectly describe the sequence of an IP adress, even with the large amount of variability within them. Imagine having to read through all of those numbers without the help of regex!
 
 If you're a Biology major like me, you might be asking yourself: why would I ever use regex? Turns out this function can be extremely useful in analyzing something us Biology majors have a lot of experience with: DNA sequences. Imagine you have a very long DNA sequence, and you want to match restriction enzyme binding sites ANTAAT and GCRWTG. Per the IUPAC nucleotide code, N is any base, R is A or G, W is A or T. This means we have some variability in the exact DNA sequence we are looking for, which regex can help us with. 
 
