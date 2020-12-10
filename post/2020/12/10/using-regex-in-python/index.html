@@ -73,10 +73,9 @@
 
 
 <p>Regular Expressions (known as regex) allow you to search for matches of a sequence of characters that are of interest to you within strings or datasets. This can be extremely useful, especially for replacing strings, reformatting data, or identifying the occurences of cases within some data that match a certain criteria. Before we learn how to use regex, it would be beneficial to familiarize yourself with the symbols in this table.</p>
-<div class="figure">
+<p align="center">
 <img src="../../../../../post/2020-12-10-using-regex-in-python_files/Regex%20Symbols.png" style="width:60.0%" style="height:60.0%" />
-
-</div>
+</p>
 <p>Let's look at a simple example. Say you have a string containing three letter words, and you are only interested in the occurence of words ending in &quot;at.&quot; The following code would allow you to grab the all such instances.</p>
 <pre class="python"><code>import re
 string1 = &quot;see cat far pat sad eat&quot;
@@ -107,10 +106,9 @@ re.findall(r&quot;A[A,T,C,G]TAAT&quot;, string4)</code></pre>
 <pre><code>## [&#39;ATTAAT&#39;, &#39;ACTAAT&#39;]</code></pre>
 <pre class="python"><code>re.findall(r&quot;GC[A,G][A,T]TG&quot;, string4)</code></pre>
 <pre><code>## [&#39;GCGTTG&#39;, &#39;GCAATG&#39;]</code></pre>
-<div class="figure">
+<p align="center">
 <img src="../../../../../post/2020-12-10-using-regex-in-python_files/mindblowncat.jpg" style="width:75.0%" style="height:75.0%" />
-
-</div>
+</p>
 <p>I know, my mind is blown too! Look at how long that DNA sequence was! Just by using <code>[]</code> to identify the possible characters at unspecified bases, we were able to find the exact sequence of the restriction enzyme binding sites. I sure wish I knew regex before having to do my Genetics homework!</p>
 <p>But what if you want to analyze a dataset that you have loaded in R using a function from python? Is there a way for R and Python talk to each other and share information? There sure is! We can use a package in R called reticulate. Here's an example.</p>
 <pre class="r"><code>library(reticulate)

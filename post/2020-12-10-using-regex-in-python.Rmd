@@ -10,7 +10,9 @@ description: ''
 
 Regular Expressions (known as regex) allow you to search for matches of a sequence of characters that are of interest to you within strings or datasets. This can be extremely useful, especially for replacing strings, reformatting data, or identifying the occurences of cases within some data that match a certain criteria. Before we learn how to use regex, it would be beneficial to familiarize yourself with the symbols in this table.
 
+<p align="center">
 ![](/post/2020-12-10-using-regex-in-python_files/Regex Symbols.png){width=60% height=60%}
+</p>
 
 Let's look at a simple example. Say you have a string containing three letter words, and you are only interested in the occurence of words ending in "at." The following code would allow you to grab the all such instances. 
 
@@ -54,7 +56,9 @@ re.findall(r"A[A,T,C,G]TAAT", string4)
 re.findall(r"GC[A,G][A,T]TG", string4)
 ```
 
+<p align="center">
 ![](/post/2020-12-10-using-regex-in-python_files/mindblowncat.jpg){width=75% height=75%}
+</p>
 
 I know, my mind is blown too! Look at how long that DNA sequence was! Just by using `[]` to identify the possible characters at unspecified bases, we were able to find the exact sequence of the restriction enzyme binding sites. I sure wish I knew regex before having to do my Genetics homework!
 
